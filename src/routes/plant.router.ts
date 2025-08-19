@@ -1,11 +1,9 @@
+import { Router } from "express";
+import { getAllPlants, getPlantById } from "../controllers/plant.controller";
 
-import {Router} from "express"
-import {getAllPlants, getPlantById} from "../controllers/plant.controller";
+const plantRouter = Router();
 
-const router = Router()
+plantRouter.get("/", getAllPlants);
+plantRouter.get("/:id", getPlantById);
 
-
-router.get("/plants", getAllPlants)
-router.get("/plants/:id", getPlantById)
-
-export default router
+export default plantRouter;
