@@ -1,103 +1,54 @@
-import {Request, Response} from "express"
-import {createPlantSchema, updatePlantSchema} from "../schemas/plant.schema";
+import { Request, Response } from "express";
+import { createPlantSchema, updatePlantSchema} from "../schemas/plant.schema";
+import { plantService } from "../services/plant.service";
 
 export interface IPlant {
-    id: number,
-    name: string
+    id: number;
+    name: string;
 }
 
-export const PLANTS: IPlant[] = [
-    { id: 1, name: "Saphina" },
-    { id: 2, name: "Afina" }
-];
-
-let nextId = 3
-
-export const getAllPlants = (req: Request, res: Response): void => {
-    res.json(PLANTS);
+export const getAllPlants = (_req: Request, res: Response) => {
+    const plants = plantService.getAll();
+    res.json(plants);
 };
 
-export const getPlantById = async (req: Request, res: Response): Promise<void> => {
-    const id: number = Number(req.params.id);
-    const plant: IPlant | undefined = PLANTS.find(plant => plant.id === id);
+export const getPlantById = (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
 
-    if (!plant) {
-        res.status(404).json({ error: "Plant not found" });
-        return;
-    }
+    const plant = plantService.getById(id);
+    if (!plant) return res.status(404).json({ error: "Plant not found" });
 
     res.json(plant);
 };
 
-export const  createPlant = async (req: Request, res: Response) => {
-    const parse = createPlantSchema.safeParse(req.body)
-    if(!parse.success){
-    res.status(400).json({error: "name is required"})
-        return
-    }
-    console.log(parse)
-    const name = parse.data.name.trim();
+export const createPlant = (req: Request, res: Response) => {
+    const parse = createPlantSchema.safeParse(req.body);
+    if (!parse.success) return res.status(400).json({ error: parse.error.issues[0].message });
 
-    const id = PLANTS.length ? Math.max(...PLANTS.map(p => p.id)) + 1 : 1;
+    const newPlant = plantService.create(parse.data.name.trim());
+    res.status(201).json(newPlant);
+};
 
-    const newPlant: IPlant = {
-        id,
-        name
-    }
-    PLANTS.push(newPlant)
-    res.status(201).json(newPlant)
-}
-
-
-export const updatePlant = (req: Request, res: Response): void => {
+export const updatePlant = (req: Request, res: Response) => {
     const id = Number(req.params.id);
-    if (Number.isNaN(id)) {
-        res.status(400).json({ error: "Invalid id" });
-        return;
-    }
+    if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
 
     const parse = updatePlantSchema.safeParse(req.body);
-    if (!parse.success) {
-        const msg = parse.error.errors[0]?.message || "Invalid body";
-        res.status(400).json({ error: msg });
-        return;
-    }
+    if (!parse.success) return res.status(400).json({ error: parse.error.issues[0].message });
 
-    const idx = PLANTS.findIndex(p => p.id === id);
-    if (idx === -1) {
-        res.status(404).json({ error: "Plant not found" });
-        return;
-    }
+    const updatedPlant = plantService.update(id, parse.data.name?.trim());
+    if (!updatedPlant) return res.status(404).json({ error: "Plant not found" });
 
-    const current = PLANTS[idx];
-    const incomingName = parse.data.name;
-    const name = typeof incomingName === "string" ? incomingName.trim() : current.name;
-
-    if (typeof name !== "string" || name.length === 0) {
-        res.status(400).json({ error: "name is required" });
-        return;
-    }
-
-    const updatedPlant: IPlant = { ...current, name };
-    PLANTS[idx] = updatedPlant;
-
-    res.status(200).json(updatedPlant);
+    res.json(updatedPlant);
 };
 
 export const deletePlant = (req: Request, res: Response) => {
     const id = Number(req.params.id);
-    if (Number.isNaN(id)) {
-        res.status(400).json({ error: "Invalid id" });
-        return;
-    }
+    if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
 
-    const idx = PLANTS.findIndex(plant => plant.id === id);
-    if (idx === -1) {
-        res.status(404).json({ error: "Plant not found" });
-        return;
-    }
+    const deleted = plantService.delete(id);
+    if (!deleted) return res.status(404).json({ error: "Plant not found" });
 
-    PLANTS.splice(idx, 1);
-
-    res.status(204).send(); // No Content
+    res.status(204).send();
 };

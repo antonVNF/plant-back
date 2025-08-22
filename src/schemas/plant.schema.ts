@@ -5,7 +5,7 @@ export const createPlantSchema = z.object({
 });
 
 export const updatePlantSchema = z.object({
-    name: z.string().min(1, "name is required").optional(),
+    name: z.string().min(1, "name is required"),
 });
 
 export type CreatePlantDTO = z.infer<typeof createPlantSchema>;
