@@ -9,4 +9,4 @@ app.use("/plants", plantRouter);
 
 app.use(errorHandler);
 
-export default app
+export default app;

@@ -1,8 +1,11 @@
-import express from 'express'
-const app = express()
+import { logger } from "./utils/logger";
+import { connectDB } from "./utils/db";
+import app from "./app";
 
-const PORT = process.env.PORT || 4200
+const PORT = process.env.PORT || 4200;
 
-app.listen(PORT, () => {
-    console.log("listen", PORT)
-})
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
+  });
+});
